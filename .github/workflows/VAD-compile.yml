@@ -31,7 +31,11 @@ jobs:
 
       - name: Сборка драйвера
         run: |
-          msbuild "VirtualAudioDriver.sln" /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
+          msbuild "VirtualAudioDriver.sln" /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} 2>&1 | Tee-Object -FilePath msbuild.log
+          $code = $LASTEXITCODE
+          # Ошибки выводятся отдельными аннотациями, чтобы видеть причину без чтения полного лога
+          Select-String -Path msbuild.log -Pattern ': (fatal )?error ' | Select-Object -First 15 | ForEach-Object { Write-Host "::error::$($_.Line.Trim())" }
+          exit $code
 
       - name: Список собранных файлов
         if: always()
